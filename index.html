@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>数字あてクイズ</title>
+<style>
+  :root{
+    --bg:#0d0b1e;
+    --card:#1a1733;
+    --card2:#241f47;
+    --accent:#ffb830;
+    --accent2:#ff5c8a;
+    --blue:#4cc9f0;
+    --green:#3ddc84;
+    --text:#f4f1ff;
+    --muted:#9a92c9;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    background-image:radial-gradient(circle at 20% 0%, #2a1f5e 0%, transparent 45%),
+                     radial-gradient(circle at 90% 90%, #3d1740 0%, transparent 40%);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+    min-height:100dvh;
+    display:flex;flex-direction:column;
+    overscroll-behavior:none;
+  }
+  .screen{display:none;flex:1;flex-direction:column;padding:24px 20px calc(24px + env(safe-area-inset-bottom));max-width:520px;width:100%;margin:0 auto;}
+  .screen.active{display:flex;}
+  h1{font-size:34px;line-height:1.25;text-align:center;}
+  .subtitle{color:var(--muted);text-align:center;margin-top:10px;font-size:15px;line-height:1.6;}
+  .spacer{flex:1;}
+  .btn{
+    display:block;width:100%;border:none;border-radius:16px;
+    padding:18px;font-size:19px;font-weight:700;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),#ff8c42);
+    color:#241500;margin-top:14px;
+    box-shadow:0 6px 20px rgba(255,140,40,.35);
+    transition:transform .08s;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn.secondary{background:var(--card2);color:var(--text);box-shadow:none;border:1px solid #3a3470;}
+  .btn.green{background:linear-gradient(135deg,#3ddc84,#19b567);color:#00301a;box-shadow:0 6px 20px rgba(61,220,132,.3);}
+  .btn:disabled{opacity:.4;box-shadow:none;}
+  .logo{font-size:64px;text-align:center;margin-bottom:8px;}
+  .card{background:var(--card);border-radius:20px;padding:20px;margin-top:16px;border:1px solid #2c2657;}
+  label{font-size:14px;color:var(--muted);}
+  .stepper{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:12px;}
+  .stepper button{
+    width:56px;height:56px;border-radius:50%;border:none;font-size:28px;font-weight:700;
+    background:var(--card2);color:var(--accent);border:1px solid #3a3470;cursor:pointer;
+  }
+  .stepper button:active{transform:scale(.94);}
+  .stepper .num{font-size:44px;font-weight:800;min-width:70px;text-align:center;color:var(--accent);}
+  .name-list{margin-top:8px;}
+  .name-list input{
+    width:100%;margin-top:10px;padding:14px 16px;border-radius:12px;border:1px solid #3a3470;
+    background:var(--card2);color:var(--text);font-size:17px;outline:none;
+  }
+  .name-list input:focus{border-color:var(--accent);}
+  .round-badge{
+    align-self:center;background:var(--card2);border:1px solid #3a3470;color:var(--blue);
+    padding:6px 18px;border-radius:999px;font-weight:800;font-size:15px;letter-spacing:.1em;
+  }
+  .cat-badge{align-self:center;margin-top:14px;background:#31255f;color:#c9baff;padding:4px 14px;border-radius:999px;font-size:13px;font-weight:700;}
+  .question-text{font-size:26px;font-weight:800;line-height:1.5;text-align:center;margin-top:18px;}
+  .question-small{font-size:17px;font-weight:700;line-height:1.5;text-align:center;margin-top:14px;color:var(--text);}
+  .handoff-emoji{font-size:72px;text-align:center;}
+  .handoff-name{font-size:32px;font-weight:800;text-align:center;color:var(--accent);margin-top:12px;}
+  .handoff-note{text-align:center;color:var(--muted);margin-top:10px;font-size:15px;}
+  .input-row{display:flex;align-items:center;gap:10px;margin-top:22px;}
+  .input-row input{
+    flex:1;padding:18px;border-radius:16px;border:2px solid #3a3470;background:var(--card2);
+    color:var(--text);font-size:32px;font-weight:800;text-align:center;outline:none;min-width:0;
+  }
+  .input-row input:focus{border-color:var(--accent);}
+  .unit{font-size:22px;font-weight:700;color:var(--muted);white-space:nowrap;}
+  .answer-big{font-size:52px;font-weight:900;text-align:center;color:var(--accent);margin-top:6px;word-break:break-all;}
+  .answer-unit{font-size:22px;color:var(--muted);font-weight:700;}
+  .rate-note{text-align:center;font-size:13px;color:var(--muted);margin-top:10px;}
+  .rate-note b{color:var(--blue);}
+  table{width:100%;border-collapse:collapse;margin-top:6px;}
+  th{font-size:12px;color:var(--muted);font-weight:600;padding:6px 4px;text-align:right;border-bottom:1px solid #2c2657;}
+  th:first-child{text-align:left;}
+  td{padding:11px 4px;font-size:16px;text-align:right;border-bottom:1px solid #232048;}
+  td:first-child{text-align:left;font-weight:700;}
+  tr.best td{color:var(--green);}
+  tr.worst-guess td{color:var(--accent2);}
+  .minus{color:var(--accent2);font-weight:700;}
+  .score-now{font-weight:800;}
+  .rank-list{margin-top:6px;}
+  .rank-item{display:flex;align-items:center;gap:12px;padding:14px 6px;border-bottom:1px solid #232048;}
+  .rank-item .medal{font-size:26px;width:36px;text-align:center;}
+  .rank-item .rname{flex:1;font-size:19px;font-weight:800;}
+  .rank-item .rscore{font-size:20px;font-weight:900;color:var(--blue);}
+  .rank-item.first .rname,.rank-item.first .rscore{color:var(--accent);}
+  .rank-item.last .rname,.rank-item.last .rscore{color:var(--accent2);}
+  .drink-card{background:linear-gradient(135deg,#3d1740,#5b1b3c);border:1px solid #7c2b55;border-radius:20px;padding:22px;margin-top:18px;text-align:center;}
+  .drink-title{font-size:15px;color:#ffb6d1;font-weight:700;letter-spacing:.08em;}
+  .drink-loser{font-size:24px;font-weight:900;margin-top:10px;}
+  .drink-count{font-size:38px;font-weight:900;margin-top:10px;color:var(--accent);line-height:1.3;}
+  .drink-detail{color:#e3c9ff;font-size:14px;margin-top:10px;line-height:1.6;}
+  .progress-dots{display:flex;justify-content:center;gap:8px;margin-top:16px;}
+  .progress-dots span{width:10px;height:10px;border-radius:50%;background:#3a3470;}
+  .progress-dots span.done{background:var(--accent);}
+  .fade-in{animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  .center{display:flex;flex-direction:column;justify-content:center;}
+</style>
+</head>
+<body>
+
+<!-- ============ タイトル ============ -->
+<div class="screen active center" id="screen-title">
+  <div class="logo">🔢🍻</div>
+  <h1>数字あてクイズ</h1>
+  <p class="subtitle">3ラウンドの数字あてバトル!<br>正解から離れた分だけ点数が減る。<br>ベベは点差の分だけ飲むべし🥃</p>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:14px;color:var(--muted);line-height:2;">
+      1000点スタート / 全3問<br>
+      減点は答えの桁数でスケール(1問最大-300点)<br>
+      点差100点につき1杯・3杯で1ウォッカ
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn" id="btn-start">はじめる</button>
+</div>
+
+<!-- ============ 設定 ============ -->
+<div class="screen" id="screen-setup" style="display:none" hidden>
+  <h1 style="font-size:26px;">プレイヤー設定</h1>
+  <div class="card">
+    <label>人数(2〜8人)</label>
+    <div class="stepper">
+      <button id="btn-minus" type="button">−</button>
+      <div class="num" id="player-count">4</div>
+      <button id="btn-plus" type="button">+</button>
+    </div>
+  </div>
+  <div class="card">
+    <label>名前</label>
+    <div class="name-list" id="name-list"></div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn green" id="btn-go">ゲームスタート!</button>
+  <button class="btn secondary" id="btn-back-title">もどる</button>
+</div>
+
+<!-- ============ 問題発表 ============ -->
+<div class="screen center" id="screen-question" style="display:none" hidden>
+  <div class="round-badge" id="q-round">ROUND 1 / 3</div>
+  <div class="cat-badge" id="q-cat"></div>
+  <div class="question-text" id="q-text"></div>
+  <div class="progress-dots" id="q-dots"></div>
+  <div class="spacer"></div>
+  <p class="handoff-note">全員で問題を確認してから回答スタート!</p>
+  <button class="btn" id="btn-answer-start">回答スタート</button>
+</div>
+
+<!-- ============ 手渡し ============ -->
+<div class="screen center" id="screen-handoff" style="display:none" hidden>
+  <div class="handoff-emoji">📱</div>
+  <div class="handoff-name" id="h-name"></div>
+  <p class="handoff-note">にスマホを渡してください<br>他の人は見ないでね👀</p>
+  <div class="spacer"></div>
+  <button class="btn" id="btn-answer">回答する</button>
+</div>
+
+<!-- ============ 回答入力 ============ -->
+<div class="screen center" id="screen-input" style="display:none" hidden>
+  <div class="round-badge" id="i-player"></div>
+  <div class="question-small" id="i-text"></div>
+  <div class="input-row">
+    <input type="text" inputmode="decimal" id="i-value" placeholder="?" autocomplete="off">
+    <div class="unit" id="i-unit"></div>
+  </div>
+  <p class="handoff-note" id="i-error" style="color:var(--accent2);visibility:hidden;">数字を入力してね</p>
+  <div class="spacer"></div>
+  <button class="btn green" id="btn-submit">これで決定!</button>
+</div>
+
+<!-- ============ 結果発表 ============ -->
+<div class="screen" id="screen-reveal" style="display:none" hidden>
+  <div class="round-badge" id="r-round"></div>
+  <div class="question-small" id="r-text" style="color:var(--muted);"></div>
+  <div style="text-align:center;margin-top:16px;font-size:14px;color:var(--muted);">正解は…</div>
+  <div class="answer-big" id="r-answer"></div>
+  <div class="rate-note" id="r-rate"></div>
+  <div class="card" style="padding:14px 16px;">
+    <table>
+      <thead><tr><th>プレイヤー</th><th>回答</th><th>差</th><th>減点</th><th>点数</th></tr></thead>
+      <tbody id="r-table"></tbody>
+    </table>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn" id="r-next">次のラウンドへ</button>
+</div>
+
+<!-- ============ 最終結果 ============ -->
+<div class="screen" id="screen-final" style="display:none" hidden>
+  <h1 style="font-size:28px;">🏆 最終結果 🏆</h1>
+  <div class="card rank-list" id="f-ranks"></div>
+  <div class="drink-card" id="f-drink"></div>
+  <div class="spacer"></div>
+  <button class="btn" id="btn-rematch">同じメンバーでもう一回</button>
+  <button class="btn secondary" id="btn-change">メンバー変更</button>
+</div>
+
+<script>
+/* ==================== ゲームロジック ==================== */
+const START_SCORE = 1000;
+const ROUNDS = 3;
+const MAX_PLAYERS = 8, MIN_PLAYERS = 2;
+const MAX_DED = 300; // 1問あたりの最大減点
+
+/* ---- 減点レート:答えの桁数でスケール ----
+   1桁:差×100 / 2桁:差×10 / 3桁:差×1 / 4桁:差×0.1 / 5桁:差×0.01 …
+   ただし西暦の年号(単位が「年」で答えが1000以上)は差×1 */
+function multFor(q){
+  if((q.u||'').startsWith('年') && Math.abs(q.a) >= 1000){
+    return {mult:1, why:'年号問題は差×1'};
+  }
+  const d = Math.max(1, String(Math.floor(Math.abs(q.a))).length);
+  const mult = Math.pow(10, 3-d);
+  const label = mult >= 1 ? String(mult) : mult.toFixed(d-3);
+  return {mult, why:`答えが${d}桁なので差×${label}`};
+}
+
+let playerCount = 4;
+let players = [];      // {name, score}
+let gameQuestions = []; // 今回の3問
+let round = 0;          // 0-indexed
+let answers = [];       // 現ラウンドの回答
+let turn = 0;           // 現在入力中のプレイヤー
+
+/* ---- 画面切替(インラインstyleで強制的に1画面のみ表示) ---- */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active');
+    s.style.display = 'none';
+    s.setAttribute('hidden','');
+  });
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.removeAttribute('hidden');
+  el.style.display = 'flex';
+  el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
+  window.scrollTo(0,0);
+}
+
+/* ---- 設定 ---- */
+function goSetup(){ renderNames(); show('screen-setup'); }
+function changeCount(d){
+  playerCount = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, playerCount + d));
+  document.getElementById('player-count').textContent = playerCount;
+  renderNames();
+}
+function renderNames(){
+  const list = document.getElementById('name-list');
+  const old = [...list.querySelectorAll('input')].map(i=>i.value);
+  list.innerHTML = '';
+  for(let i=0;i<playerCount;i++){
+    const inp = document.createElement('input');
+    inp.placeholder = `プレイヤー${i+1}`;
+    inp.maxLength = 10;
+    if(old[i]) inp.value = old[i];
+    list.appendChild(inp);
+  }
+  document.getElementById('player-count').textContent = playerCount;
+}
+
+/* ---- 出題管理(同一端末での重複出題をなるべく回避) ---- */
+function loadUsed(){
+  try{ return new Set(JSON.parse(localStorage.getItem('numquiz_used')||'[]')); }
+  catch(e){ return new Set(); }
+}
+function saveUsed(set){
+  try{ localStorage.setItem('numquiz_used', JSON.stringify([...set])); }catch(e){}
+}
+function pickQuestions(){
+  let used = loadUsed();
+  let pool = QUESTIONS.map((q,i)=>i).filter(i=>!used.has(i));
+  if(pool.length < ROUNDS){ used = new Set(); pool = QUESTIONS.map((q,i)=>i); }
+  // シャッフル
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  const chosen = pool.slice(0, ROUNDS);
+  chosen.forEach(i=>used.add(i));
+  saveUsed(used);
+  return chosen.map(i=>QUESTIONS[i]);
+}
+
+/* ---- ゲーム開始 ---- */
+function startGame(){
+  const inputs = [...document.querySelectorAll('#name-list input')];
+  players = inputs.map((inp,i)=>({ name: inp.value.trim() || `プレイヤー${i+1}`, score: START_SCORE }));
+  gameQuestions = pickQuestions();
+  round = 0;
+  startRound();
+}
+function rematch(){
+  players.forEach(p=>p.score = START_SCORE);
+  gameQuestions = pickQuestions();
+  round = 0;
+  startRound();
+}
+
+/* ---- ラウンド ---- */
+function startRound(){
+  answers = new Array(players.length).fill(null);
+  turn = 0;
+  const q = gameQuestions[round];
+  document.getElementById('q-round').textContent = `ROUND ${round+1} / ${ROUNDS}`;
+  document.getElementById('q-cat').textContent = q.c;
+  document.getElementById('q-text').textContent = q.q;
+  const dots = document.getElementById('q-dots');
+  dots.innerHTML = '';
+  for(let i=0;i<ROUNDS;i++){
+    const s = document.createElement('span');
+    if(i<=round) s.classList.add('done');
+    dots.appendChild(s);
+  }
+  show('screen-question');
+}
+function startAnswering(){ turn = 0; showHandoff(); }
+function showHandoff(){
+  document.getElementById('h-name').textContent = players[turn].name + ' さん';
+  show('screen-handoff');
+}
+function showInput(){
+  const q = gameQuestions[round];
+  document.getElementById('i-player').textContent = players[turn].name + ' さんの回答';
+  document.getElementById('i-text').textContent = q.q;
+  document.getElementById('i-unit').textContent = q.u || '';
+  const inp = document.getElementById('i-value');
+  inp.value = '';
+  document.getElementById('i-error').style.visibility = 'hidden';
+  show('screen-input');
+  setTimeout(()=>inp.focus(), 100);
+}
+function submitAnswer(){
+  const raw = document.getElementById('i-value').value.trim().replace(/[０-９．]/g, ch=>String.fromCharCode(ch.charCodeAt(0)-0xFEE0)).replace(/,/g,'');
+  const v = parseFloat(raw);
+  if(raw === '' || isNaN(v)){
+    document.getElementById('i-error').style.visibility = 'visible';
+    return;
+  }
+  answers[turn] = v;
+  document.getElementById('i-value').blur();
+  turn++;
+  if(turn < players.length){ showHandoff(); }
+  else{ showReveal(); }
+}
+
+/* ---- ラウンド結果 ---- */
+function fmt(n){
+  return Number.isInteger(n) ? n.toLocaleString('ja-JP') : n.toLocaleString('ja-JP',{maximumFractionDigits:2});
+}
+function showReveal(){
+  const q = gameQuestions[round];
+  document.getElementById('r-round').textContent = `ROUND ${round+1} の結果`;
+  document.getElementById('r-text').textContent = q.q;
+  document.getElementById('r-answer').innerHTML = `${fmt(q.a)}<span class="answer-unit"> ${q.u||''}</span>`;
+
+  // 減点計算:桁数スケール×差、1問最大300点、0点未満にはならない
+  const rate = multFor(q);
+  document.getElementById('r-rate').innerHTML = `減点レート:<b>${escapeHtml(rate.why)}</b> ※1問最大-${MAX_DED}点`;
+  const rows = players.map((p,i)=>{
+    const diff = Math.abs(answers[i] - q.a);
+    const ded = Math.min(MAX_DED, Math.round(diff * rate.mult));
+    return {i, name:p.name, ans:answers[i], diff, ded};
+  });
+  const sorted = [...rows].sort((a,b)=>a.diff-b.diff);
+  const bestDiff = sorted[0].diff;
+  const worstDiff = sorted[sorted.length-1].diff;
+
+  rows.forEach(r=>{ players[r.i].score = Math.max(0, players[r.i].score - r.ded); });
+
+  const tbody = document.getElementById('r-table');
+  tbody.innerHTML = '';
+  sorted.forEach(r=>{
+    const tr = document.createElement('tr');
+    if(r.diff === bestDiff) tr.classList.add('best');
+    else if(r.diff === worstDiff && worstDiff !== bestDiff) tr.classList.add('worst-guess');
+    const mark = r.diff === 0 ? '🎯' : (r.diff === bestDiff ? '👑' : '');
+    tr.innerHTML = `<td>${mark}${escapeHtml(r.name)}</td><td>${fmt(r.ans)}</td><td>${fmt(Math.round(r.diff*100)/100)}</td><td class="minus">-${fmt(r.ded)}</td><td class="score-now">${fmt(players[r.i].score)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('r-next').textContent = (round === ROUNDS-1) ? '最終結果発表へ!' : '次のラウンドへ';
+  show('screen-reveal');
+}
+function nextRound(){
+  round++;
+  if(round < ROUNDS){ startRound(); }
+  else{ showFinal(); }
+}
+
+/* ---- 最終結果 & お酒カウント ---- */
+function drinkText(pointDiff){
+  const cups = Math.ceil(pointDiff / 100);       // 100点につき1杯(切り上げ)
+  const vodka = Math.floor(cups / 3);            // 3杯 = 1ウォッカ
+  const rest = cups % 3;
+  let parts = [];
+  if(vodka > 0) parts.push(`${vodka}ウォッカ`);
+  if(rest > 0) parts.push(`${rest}杯`);
+  if(parts.length === 0) return {cups, label:'0杯'};
+  return {cups, label:parts.join(' と ')};
+}
+function showFinal(){
+  const ranked = [...players].map((p,i)=>({...p})).sort((a,b)=>b.score-a.score);
+  const medals = ['🥇','🥈','🥉','4','5','6','7','8'];
+  const wrap = document.getElementById('f-ranks');
+  wrap.innerHTML = '';
+  const topScore = ranked[0].score;
+  const lastScore = ranked[ranked.length-1].score;
+  ranked.forEach((p,idx)=>{
+    const div = document.createElement('div');
+    div.className = 'rank-item' + (p.score===topScore ? ' first' : (p.score===lastScore ? ' last' : ''));
+    const medal = idx < 3 ? medals[idx] : `${idx+1}位`;
+    div.innerHTML = `<div class="medal">${medal}</div><div class="rname">${escapeHtml(p.name)}${p.score===lastScore && topScore!==lastScore ? ' 💀' : ''}</div><div class="rscore">${fmt(p.score)}点</div>`;
+    wrap.appendChild(div);
+  });
+
+  const drinkCard = document.getElementById('f-drink');
+  const winners = ranked.filter(p=>p.score===topScore).map(p=>p.name);
+  const losers = ranked.filter(p=>p.score===lastScore).map(p=>p.name);
+  const diff = topScore - lastScore;
+  if(diff === 0){
+    drinkCard.innerHTML = `<div class="drink-title">🍻 DRINK TIME 🍻</div>
+      <div class="drink-count">全員同点!</div>
+      <div class="drink-detail">奇跡の引き分け。全員で乾杯🍻</div>`;
+  }else{
+    const d = drinkText(diff);
+    drinkCard.innerHTML = `<div class="drink-title">🍻 DRINK TIME 🍻</div>
+      <div class="drink-loser">ベベ:${losers.map(escapeHtml).join('、')}</div>
+      <div class="drink-count">${d.label}</div>
+      <div class="drink-detail">トップ(${winners.map(escapeHtml).join('、')})との点差 ${fmt(diff)}点<br>100点につき1杯(切り上げ)で ${d.cups}杯 → 3杯ごとに1ウォッカ換算</div>`;
+  }
+  show('screen-final');
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+/* ==================== 問題データ ==================== */
+const QUESTIONS = [
+/* ---- 歴史・年代 ---- */
+{c:"歴史・年代",q:"関ヶ原の戦いが起きたのは西暦何年?",a:1600,u:"年"},
+{c:"歴史・年代",q:"本能寺の変が起きたのは西暦何年?",a:1582,u:"年"},
+{c:"歴史・年代",q:"源頼朝が征夷大将軍に任命されたのは西暦何年?",a:1192,u:"年"},
+{c:"歴史・年代",q:"大化の改新が始まったのは西暦何年?",a:645,u:"年"},
+{c:"歴史・年代",q:"平安京に都が移されたのは西暦何年?",a:794,u:"年"},
+{c:"歴史・年代",q:"平城京に都が移されたのは西暦何年?",a:710,u:"年"},
+{c:"歴史・年代",q:"応仁の乱が始まったのは西暦何年?",a:1467,u:"年"},
+{c:"歴史・年代",q:"桶狭間の戦いが起きたのは西暦何年?",a:1560,u:"年"},
+{c:"歴史・年代",q:"大坂夏の陣が起きたのは西暦何年?",a:1615,u:"年"},
+{c:"歴史・年代",q:"明治元年は西暦何年?",a:1868,u:"年"},
+{c:"歴史・年代",q:"大政奉還が行われたのは西暦何年?",a:1867,u:"年"},
+{c:"歴史・年代",q:"ペリーが黒船で浦賀に来航したのは西暦何年?",a:1853,u:"年"},
+{c:"歴史・年代",q:"徳川家康が江戸幕府を開いたのは西暦何年?",a:1603,u:"年"},
+{c:"歴史・年代",q:"島原の乱が始まったのは西暦何年?",a:1637,u:"年"},
+{c:"歴史・年代",q:"赤穂浪士の討ち入り(忠臣蔵)が起きたのは西暦何年?",a:1702,u:"年"},
+{c:"歴史・年代",q:"西南戦争が起きたのは西暦何年?",a:1877,u:"年"},
+{c:"歴史・年代",q:"日清戦争が始まったのは西暦何年?",a:1894,u:"年"},
+{c:"歴史・年代",q:"日露戦争が始まったのは西暦何年?",a:1904,u:"年"},
+{c:"歴史・年代",q:"第一次世界大戦が始まったのは西暦何年?",a:1914,u:"年"},
+{c:"歴史・年代",q:"太平洋戦争が始まった(真珠湾攻撃)のは西暦何年?",a:1941,u:"年"},
+{c:"歴史・年代",q:"第二次世界大戦が終わったのは西暦何年?",a:1945,u:"年"},
+{c:"歴史・年代",q:"最初の東京オリンピックが開催されたのは西暦何年?",a:1964,u:"年"},
+{c:"歴史・年代",q:"大阪万博(EXPO'70)が開催されたのは西暦何年?",a:1970,u:"年"},
+{c:"歴史・年代",q:"沖縄が日本に返還されたのは西暦何年?",a:1972,u:"年"},
+{c:"歴史・年代",q:"平成が始まったのは西暦何年?",a:1989,u:"年"},
+{c:"歴史・年代",q:"令和が始まったのは西暦何年?",a:2019,u:"年"},
+{c:"歴史・年代",q:"東日本大震災が起きたのは西暦何年?",a:2011,u:"年"},
+{c:"歴史・年代",q:"阪神・淡路大震災が起きたのは西暦何年?",a:1995,u:"年"},
+{c:"歴史・年代",q:"東京スカイツリーが完成(開業)したのは西暦何年?",a:2012,u:"年"},
+{c:"歴史・年代",q:"東京タワーが完成したのは西暦何年?",a:1958,u:"年"},
+{c:"歴史・年代",q:"東海道新幹線が開業したのは西暦何年?",a:1964,u:"年"},
+{c:"歴史・年代",q:"青函トンネルが開通したのは西暦何年?",a:1988,u:"年"},
+{c:"歴史・年代",q:"瀬戸大橋が開通したのは西暦何年?",a:1988,u:"年"},
+{c:"歴史・年代",q:"明石海峡大橋が開通したのは西暦何年?",a:1998,u:"年"},
+{c:"歴史・年代",q:"コロンブスがアメリカ大陸に到達したのは西暦何年?",a:1492,u:"年"},
+{c:"歴史・年代",q:"フランス革命が始まったのは西暦何年?",a:1789,u:"年"},
+{c:"歴史・年代",q:"アメリカ独立宣言が出されたのは西暦何年?",a:1776,u:"年"},
+{c:"歴史・年代",q:"ベルリンの壁が崩壊したのは西暦何年?",a:1989,u:"年"},
+{c:"歴史・年代",q:"ソ連が崩壊したのは西暦何年?",a:1991,u:"年"},
+{c:"歴史・年代",q:"アポロ11号が人類初の月面着陸をしたのは西暦何年?",a:1969,u:"年"},
+{c:"歴史・年代",q:"タイタニック号が沈没したのは西暦何年?",a:1912,u:"年"},
+{c:"歴史・年代",q:"第二次世界大戦が始まったのは西暦何年?",a:1939,u:"年"},
+{c:"歴史・年代",q:"ナポレオンがワーテルローの戦いで敗れたのは西暦何年?",a:1815,u:"年"},
+{c:"歴史・年代",q:"ライト兄弟が人類初の動力飛行に成功したのは西暦何年?",a:1903,u:"年"},
+{c:"歴史・年代",q:"エッフェル塔が完成したのは西暦何年?",a:1889,u:"年"},
+{c:"歴史・年代",q:"自由の女神像が完成(除幕)したのは西暦何年?",a:1886,u:"年"},
+{c:"歴史・年代",q:"織田信長が亡くなったときの年齢(享年・数え年)は?",a:49,u:"歳"},
+{c:"歴史・年代",q:"徳川家康が亡くなったときの年齢(享年・数え年)は?",a:75,u:"歳"},
+{c:"歴史・年代",q:"江戸幕府の将軍は全部で何人?",a:15,u:"人"},
+{c:"歴史・年代",q:"江戸時代は約何年間続いた?",a:265,u:"年間"},
+{c:"歴史・年代",q:"聖徳太子が十七条憲法を制定したのは西暦何年?",a:604,u:"年"},
+{c:"歴史・年代",q:"種子島に鉄砲が伝来したのは西暦何年?",a:1543,u:"年"},
+{c:"歴史・年代",q:"ザビエルがキリスト教を日本に伝えたのは西暦何年?",a:1549,u:"年"},
+{c:"歴史・年代",q:"豊臣秀吉の朝鮮出兵(文禄の役)が始まったのは西暦何年?",a:1592,u:"年"},
+{c:"歴史・年代",q:"元寇の1回目(文永の役)が起きたのは西暦何年?",a:1274,u:"年"},
+{c:"歴史・年代",q:"元寇の2回目(弘安の役)が起きたのは西暦何年?",a:1281,u:"年"},
+{c:"歴史・年代",q:"壇ノ浦の戦いで平家が滅亡したのは西暦何年?",a:1185,u:"年"},
+{c:"歴史・年代",q:"ペリーが最初に来航したときの黒船は何隻?",a:4,u:"隻"},
+{c:"歴史・年代",q:"廃藩置県が行われたのは西暦何年?",a:1871,u:"年"},
+{c:"歴史・年代",q:"日本国憲法が施行されたのは西暦何年?",a:1947,u:"年"},
+{c:"歴史・年代",q:"日本国憲法が公布されたのは西暦何年?",a:1946,u:"年"},
+{c:"歴史・年代",q:"東海道五十三次の宿場の数は?",a:53,u:"か所"},
+{c:"歴史・年代",q:"第1回近代オリンピック(アテネ大会)は西暦何年?",a:1896,u:"年"},
+{c:"歴史・年代",q:"第1回サッカーワールドカップ(ウルグアイ大会)は西暦何年?",a:1930,u:"年"},
+{c:"歴史・年代",q:"リンカーンが暗殺されたのは西暦何年?",a:1865,u:"年"},
+{c:"歴史・年代",q:"伊藤博文が初代内閣総理大臣に就任したのは西暦何年?",a:1885,u:"年"},
+{c:"歴史・年代",q:"東京駅が開業したのは西暦何年?",a:1914,u:"年"},
+{c:"歴史・年代",q:"現在の通天閣(2代目)が完成したのは西暦何年?",a:1956,u:"年"},
+{c:"歴史・年代",q:"法隆寺が創建されたと伝わるのは西暦何年?",a:607,u:"年"},
+{c:"歴史・年代",q:"東大寺の大仏開眼供養が行われたのは西暦何年?",a:752,u:"年"},
+{c:"歴史・年代",q:"金閣(金閣寺)が建てられたのは西暦何年?",a:1397,u:"年"},
+{c:"歴史・年代",q:"姫路城の大天守が完成したのは西暦何年?",a:1609,u:"年"},
+{c:"歴史・年代",q:"ベルが電話の特許を取得したのは西暦何年?",a:1876,u:"年"},
+{c:"歴史・年代",q:"エジソンが白熱電球を実用化したのは西暦何年?",a:1879,u:"年"},
+{c:"歴史・年代",q:"初代iPhoneが発売されたのは西暦何年?",a:2007,u:"年"},
+{c:"歴史・年代",q:"富士山が最後に噴火した(宝永大噴火)のは西暦何年?",a:1707,u:"年"},
+{c:"歴史・年代",q:"カップヌードルが発売されたのは西暦何年?",a:1971,u:"年"},
+{c:"歴史・年代",q:"初代ゴジラ映画が公開されたのは西暦何年?",a:1954,u:"年"},
+{c:"歴史・年代",q:"ファミコン(ファミリーコンピュータ)が発売されたのは西暦何年?",a:1983,u:"年"},
+{c:"歴史・年代",q:"NHKの紅白歌合戦がテレビ放送として始まったのは西暦何年?",a:1953,u:"年"},
+{c:"歴史・年代",q:"日本でテレビ放送が始まったのは西暦何年?",a:1953,u:"年"},
+{c:"歴史・年代",q:"ハレー彗星が前回地球に接近したのは西暦何年?",a:1986,u:"年"},
+{c:"歴史・年代",q:"日本万国博覧会(大阪・関西万博)が開催されたのは西暦何年?",a:2025,u:"年"},
+{c:"歴史・年代",q:"サッカー日韓ワールドカップが開催されたのは西暦何年?",a:2002,u:"年"},
+{c:"歴史・年代",q:"長野冬季オリンピックが開催されたのは西暦何年?",a:1998,u:"年"},
+{c:"歴史・年代",q:"札幌冬季オリンピックが開催されたのは西暦何年?",a:1972,u:"年"},
+/* ---- 地理・スケール ---- */
+{c:"地理・スケール",q:"日本一長い川・信濃川の長さは何km?",a:367,u:"km"},
+{c:"地理・スケール",q:"利根川の長さは何km?",a:322,u:"km"},
+{c:"地理・スケール",q:"富士山の高さは何m?",a:3776,u:"m"},
+{c:"地理・スケール",q:"日本で2番目に高い山・北岳の高さは何m?",a:3193,u:"m"},
+{c:"地理・スケール",q:"エベレストの高さは何m?",a:8849,u:"m"},
+{c:"地理・スケール",q:"琵琶湖の面積は約何km²?",a:669,u:"km²"},
+{c:"地理・スケール",q:"琵琶湖の最大水深は約何m?",a:104,u:"m"},
+{c:"地理・スケール",q:"日本一深い湖・田沢湖の最大水深は約何m?",a:423,u:"m"},
+{c:"地理・スケール",q:"世界一深い湖・バイカル湖の最大水深は約何m?",a:1642,u:"m"},
+{c:"地理・スケール",q:"東京〜大阪の直線距離は約何km?",a:400,u:"km"},
+{c:"地理・スケール",q:"東京〜札幌の直線距離は約何km?",a:830,u:"km"},
+{c:"地理・スケール",q:"東京〜那覇の直線距離は約何km?",a:1550,u:"km"},
+{c:"地理・スケール",q:"東京〜ニューヨークの距離は約何km?",a:10850,u:"km"},
+{c:"地理・スケール",q:"地球一周(赤道)は約何km?",a:40075,u:"km"},
+{c:"地理・スケール",q:"地球から月までの距離は約何万km?",a:38,u:"万km"},
+{c:"地理・スケール",q:"マリアナ海溝の最深部は約何m?",a:10920,u:"m"},
+{c:"地理・スケール",q:"日本の島の数は?(2023年国土地理院の数え直し後)",a:14125,u:"島"},
+{c:"地理・スケール",q:"国連加盟国の数は?",a:193,u:"か国"},
+{c:"地理・スケール",q:"東京都の人口は約何万人?",a:1410,u:"万人"},
+{c:"地理・スケール",q:"大阪府の人口は約何万人?",a:880,u:"万人"},
+{c:"地理・スケール",q:"北海道の人口は約何万人?",a:510,u:"万人"},
+{c:"地理・スケール",q:"人口最少の鳥取県の人口は約何万人?",a:54,u:"万人"},
+{c:"地理・スケール",q:"神奈川県の人口は約何万人?",a:920,u:"万人"},
+{c:"地理・スケール",q:"福岡県の人口は約何万人?",a:510,u:"万人"},
+{c:"地理・スケール",q:"世界の人口は約何億人?",a:82,u:"億人"},
+{c:"地理・スケール",q:"中国の人口は約何億人?",a:14,u:"億人"},
+{c:"地理・スケール",q:"アメリカの人口は約何億人?(小数OK)",a:3.4,u:"億人"},
+{c:"地理・スケール",q:"淡路島の面積は約何km²?",a:592,u:"km²"},
+{c:"地理・スケール",q:"日本の国土面積は約何万km²?",a:38,u:"万km²"},
+{c:"地理・スケール",q:"世界一大きい国・ロシアの面積は約何万km²?",a:1710,u:"万km²"},
+{c:"地理・スケール",q:"世界一高いビル・ブルジュ・ハリファの高さは約何m?",a:828,u:"m"},
+{c:"地理・スケール",q:"東京スカイツリーの高さは何m?",a:634,u:"m"},
+{c:"地理・スケール",q:"東京タワーの高さは何m?",a:333,u:"m"},
+{c:"地理・スケール",q:"あべのハルカスの高さは何m?",a:300,u:"m"},
+{c:"地理・スケール",q:"横浜ランドマークタワーの高さは約何m?",a:296,u:"m"},
+{c:"地理・スケール",q:"通天閣の高さは約何m?",a:108,u:"m"},
+{c:"地理・スケール",q:"京都タワーの高さは約何m?",a:131,u:"m"},
+{c:"地理・スケール",q:"世界一長い川・ナイル川の長さは約何km?",a:6650,u:"km"},
+{c:"地理・スケール",q:"日本一低い山として有名な天保山の高さは約何m?(小数OK)",a:4.5,u:"m"},
+{c:"地理・スケール",q:"琵琶湖は滋賀県の面積の約何%を占める?",a:17,u:"%"},
+{c:"地理・スケール",q:"世界一落差の大きい滝・エンジェルフォールの落差は約何m?",a:979,u:"m"},
+{c:"地理・スケール",q:"ナイアガラの滝の落差は約何m?",a:51,u:"m"},
+{c:"地理・スケール",q:"日光の華厳の滝の落差は約何m?",a:97,u:"m"},
+{c:"地理・スケール",q:"明石海峡大橋の全長は約何m?",a:3911,u:"m"},
+{c:"地理・スケール",q:"青函トンネルの全長は約何km?",a:54,u:"km"},
+{c:"地理・スケール",q:"英仏海峡トンネル(ユーロトンネル)の全長は約何km?",a:50,u:"km"},
+{c:"地理・スケール",q:"山手線1周の距離は約何km?(小数OK)",a:34.5,u:"km"},
+{c:"地理・スケール",q:"山手線の駅の数は?",a:30,u:"駅"},
+{c:"地理・スケール",q:"東海道新幹線の東京〜新大阪の営業キロは約何km?",a:553,u:"km"},
+{c:"地理・スケール",q:"沖縄本島の面積は約何km²?",a:1200,u:"km²"},
+{c:"地理・スケール",q:"東京23区の面積は約何km²?",a:628,u:"km²"},
+{c:"地理・スケール",q:"日本の海岸線の総延長は約何万km?(小数OK)",a:3.5,u:"万km"},
+{c:"地理・スケール",q:"グランドキャニオンの深さは約何m?",a:1800,u:"m"},
+{c:"地理・スケール",q:"死海の湖面は海面より約何m低い?",a:430,u:"m"},
+{c:"地理・スケール",q:"世界最小の国・バチカン市国の面積は約何ヘクタール?",a:44,u:"ha"},
+{c:"地理・スケール",q:"サハラ砂漠の面積は約何万km²?",a:900,u:"万km²"},
+{c:"地理・スケール",q:"太平洋の平均水深は約何m?",a:4000,u:"m"},
+{c:"地理・スケール",q:"地球の中心(核)までの深さは約何km?",a:6371,u:"km"},
+{c:"地理・スケール",q:"音が空気中を進む速さは秒速約何m?",a:340,u:"m/秒"},
+{c:"地理・スケール",q:"光の速さは秒速約何万km?",a:30,u:"万km/秒"},
+{c:"地理・スケール",q:"東海道新幹線「のぞみ」の最高速度は時速何km?",a:285,u:"km/h"},
+{c:"地理・スケール",q:"東北新幹線「はやぶさ」の最高速度は時速何km?",a:320,u:"km/h"},
+{c:"地理・スケール",q:"リニア中央新幹線の予定最高速度は時速何km?",a:500,u:"km/h"},
+{c:"地理・スケール",q:"ジェット旅客機の巡航速度は時速約何km?",a:900,u:"km/h"},
+{c:"地理・スケール",q:"日本の都道府県で面積最大の北海道は約何万km²?(小数OK)",a:8.3,u:"万km²"},
+{c:"地理・スケール",q:"面積最小の香川県は約何km²?",a:1877,u:"km²"},
+{c:"地理・スケール",q:"日本の温泉地の数は約何か所?",a:3000,u:"か所"},
+{c:"地理・スケール",q:"世界の海が地球表面に占める割合は約何%?",a:70,u:"%"},
+{c:"地理・スケール",q:"エベレスト山頂の気圧は地上の約何%?",a:33,u:"%"},
+{c:"地理・スケール",q:"富士山の登山道・吉田ルートの五合目の標高は約何m?",a:2300,u:"m"},
+{c:"地理・スケール",q:"日本一長い商店街・天神橋筋商店街の長さは約何km?(小数OK)",a:2.6,u:"km"},
+{c:"地理・スケール",q:"レインボーブリッジの全長は約何m?",a:798,u:"m"},
+{c:"地理・スケール",q:"名古屋テレビ塔の高さは約何m?",a:180,u:"m"},
+{c:"地理・スケール",q:"札幌テレビ塔の高さは約何m?",a:147,u:"m"},
+{c:"地理・スケール",q:"福岡タワーの高さは約何m?",a:234,u:"m"},
+{c:"地理・スケール",q:"エッフェル塔の高さは約何m?",a:330,u:"m"},
+{c:"地理・スケール",q:"ピサの斜塔の高さは約何m?",a:56,u:"m"},
+{c:"地理・スケール",q:"自由の女神像の高さ(台座含む)は約何m?",a:93,u:"m"},
+{c:"地理・スケール",q:"万里の長城の総延長は約何万km?(小数OK)",a:2.1,u:"万km"},
+{c:"地理・スケール",q:"世界で一番暑かった気温の世界記録は約何℃?",a:56.7,u:"℃"},
+{c:"地理・スケール",q:"日本の最高気温記録は何℃?(小数OK)",a:41.8,u:"℃"},
+{c:"地理・スケール",q:"南極で観測された世界最低気温は約マイナス何℃?",a:89,u:"℃(マイナス)"},
+/* ---- 身近なモノ ---- */
+{c:"身近なモノ",q:"ビッグマック1個のカロリーは約何kcal?",a:530,u:"kcal"},
+{c:"身近なモノ",q:"うまい棒の税抜価格は何円?",a:12,u:"円"},
+{c:"身近なモノ",q:"ガリガリ君(ソーダ)の税抜価格は何円?",a:70,u:"円"},
+{c:"身近なモノ",q:"500円玉の重さは何g?",a:7,u:"g"},
+{c:"身近なモノ",q:"100円玉の重さは何g?(小数OK)",a:4.8,u:"g"},
+{c:"身近なモノ",q:"1円玉の重さは何g?",a:1,u:"g"},
+{c:"身近なモノ",q:"10円玉の重さは何g?(小数OK)",a:4.5,u:"g"},
+{c:"身近なモノ",q:"1万円札1枚の重さは約何g?",a:1,u:"g"},
+{c:"身近なモノ",q:"現金1億円(1万円札)の重さは約何kg?",a:10,u:"kg"},
+{c:"身近なモノ",q:"卵1個(Mサイズ)の重さは約何g?",a:60,u:"g"},
+{c:"身近なモノ",q:"ご飯茶碗1杯(150g)のカロリーは約何kcal?",a:240,u:"kcal"},
+{c:"身近なモノ",q:"カップヌードル(レギュラー)のカロリーは何kcal?",a:351,u:"kcal"},
+{c:"身近なモノ",q:"コーラ500mlペットボトルのカロリーは約何kcal?",a:225,u:"kcal"},
+{c:"身近なモノ",q:"ポテトチップスうすしお1袋(60g)のカロリーは約何kcal?",a:336,u:"kcal"},
+{c:"身近なモノ",q:"バナナ1本のカロリーは約何kcal?",a:90,u:"kcal"},
+{c:"身近なモノ",q:"りんご1個のカロリーは約何kcal?",a:140,u:"kcal"},
+{c:"身近なモノ",q:"ショートケーキ1個のカロリーは約何kcal?",a:350,u:"kcal"},
+{c:"身近なモノ",q:"ビール500mlのカロリーは約何kcal?",a:200,u:"kcal"},
+{c:"身近なモノ",q:"居酒屋の生ビール中ジョッキの容量は約何ml?",a:400,u:"ml"},
+{c:"身近なモノ",q:"ウォッカの一般的なアルコール度数は何度?",a:40,u:"度"},
+{c:"身近なモノ",q:"ビールのアルコール度数は約何度?",a:5,u:"度"},
+{c:"身近なモノ",q:"日本酒のアルコール度数は約何度?",a:15,u:"度"},
+{c:"身近なモノ",q:"ワインのアルコール度数は約何度?",a:12,u:"度"},
+{c:"身近なモノ",q:"ストロングゼロのアルコール度数は何度?",a:9,u:"度"},
+{c:"身近なモノ",q:"東京のタクシー初乗り運賃は何円?",a:500,u:"円"},
+{c:"身近なモノ",q:"郵便はがきの料金は何円?",a:85,u:"円"},
+{c:"身近なモノ",q:"定形郵便(手紙・25g以内)の料金は何円?",a:110,u:"円"},
+{c:"身近なモノ",q:"消費税が導入されたときの税率は何%?",a:3,u:"%"},
+{c:"身近なモノ",q:"大手シネコンの映画一般料金は何円?",a:2000,u:"円"},
+{c:"身近なモノ",q:"携帯電話の電話番号は何桁?",a:11,u:"桁"},
+{c:"身近なモノ",q:"クレジットカードの番号は何桁?",a:16,u:"桁"},
+{c:"身近なモノ",q:"自動販売機の500mlペットボトル飲料は約何円?",a:180,u:"円"},
+{c:"身近なモノ",q:"トランプの枚数は?(ジョーカー除く)",a:52,u:"枚"},
+{c:"身近なモノ",q:"麻雀牌は全部で何枚?",a:136,u:"枚"},
+{c:"身近なモノ",q:"将棋の駒は両者合わせて何枚?",a:40,u:"枚"},
+{c:"身近なモノ",q:"ピアノの鍵盤の数は?",a:88,u:"鍵"},
+{c:"身近なモノ",q:"単三電池の電圧は何V?(小数OK)",a:1.5,u:"V"},
+{c:"身近なモノ",q:"日本の家庭用コンセントの電圧は何V?",a:100,u:"V"},
+{c:"身近なモノ",q:"富士山頂では水は約何℃で沸騰する?",a:87,u:"℃"},
+{c:"身近なモノ",q:"A4用紙の長い方の辺は何mm?",a:297,u:"mm"},
+{c:"身近なモノ",q:"A4用紙の短い方の辺は何mm?",a:210,u:"mm"},
+{c:"身近なモノ",q:"CDの直径は何cm?",a:12,u:"cm"},
+{c:"身近なモノ",q:"日本酒の一升は何リットル?(小数OK)",a:1.8,u:"L"},
+{c:"身近なモノ",q:"一斗缶の容量は何リットル?",a:18,u:"L"},
+{c:"身近なモノ",q:"ドラム缶の容量は約何リットル?",a:200,u:"L"},
+{c:"身近なモノ",q:"土地の広さの「1坪」は約何m²?(小数OK)",a:3.3,u:"m²"},
+{c:"身近なモノ",q:"1インチは何cm?(小数OK)",a:2.54,u:"cm"},
+{c:"身近なモノ",q:"1マイルは約何km?(小数OK)",a:1.6,u:"km"},
+{c:"身近なモノ",q:"1ポンドは約何g?",a:454,u:"g"},
+{c:"身近なモノ",q:"ゴルフのカップ(穴)の直径は何mm?",a:108,u:"mm"},
+{c:"身近なモノ",q:"硬式野球ボールの縫い目の数は?",a:108,u:"個"},
+{c:"身近なモノ",q:"サッカーボールの黒い五角形パネルの数は?(伝統的なデザイン)",a:12,u:"枚"},
+{c:"身近なモノ",q:"テニスコートの縦の長さは約何m?(小数OK)",a:23.8,u:"m"},
+{c:"身近なモノ",q:"新聞の朝刊1部(全国紙)は約何円?",a:180,u:"円"},
+{c:"身近なモノ",q:"食パン1枚(6枚切り)のカロリーは約何kcal?",a:160,u:"kcal"},
+{c:"身近なモノ",q:"おにぎり1個(コンビニ・鮭)のカロリーは約何kcal?",a:180,u:"kcal"},
+{c:"身近なモノ",q:"板チョコ1枚(50g)のカロリーは約何kcal?",a:280,u:"kcal"},
+{c:"身近なモノ",q:"牛丼(並盛)のカロリーは約何kcal?",a:650,u:"kcal"},
+{c:"身近なモノ",q:"ラーメン1杯(醤油)のカロリーは約何kcal?",a:470,u:"kcal"},
+{c:"身近なモノ",q:"マヨネーズ大さじ1杯のカロリーは約何kcal?",a:80,u:"kcal"},
+{c:"身近なモノ",q:"アボカド1個のカロリーは約何kcal?",a:220,u:"kcal"},
+{c:"身近なモノ",q:"いちご1粒のカロリーは約何kcal?",a:5,u:"kcal"},
+{c:"身近なモノ",q:"角砂糖1個のカロリーは約何kcal?",a:15,u:"kcal"},
+{c:"身近なモノ",q:"梅干し1個のカロリーは約何kcal?",a:5,u:"kcal"},
+{c:"身近なモノ",q:"ポッキー1箱(2袋・約72g)のカロリーは約何kcal?",a:360,u:"kcal"},
+{c:"身近なモノ",q:"ハーゲンダッツ ミニカップ(バニラ)のカロリーは約何kcal?",a:244,u:"kcal"},
+{c:"身近なモノ",q:"じゃがりこ(サラダ)1カップのカロリーは約何kcal?",a:290,u:"kcal"},
+{c:"身近なモノ",q:"板ガム1枚の重さは約何g?",a:3,u:"g"},
+{c:"身近なモノ",q:"500mlペットボトル(空)の重さは約何g?",a:25,u:"g"},
+{c:"身近なモノ",q:"スマホ(iPhone 15)の重さは約何g?",a:171,u:"g"},
+{c:"身近なモノ",q:"バスケットボール(7号球)の重さは約何g?",a:600,u:"g"},
+{c:"身近なモノ",q:"ゴルフボールの重さは約何g?",a:46,u:"g"},
+{c:"身近なモノ",q:"卓球のピン球の重さは約何g?(小数OK)",a:2.7,u:"g"},
+{c:"身近なモノ",q:"畳1畳の面積は約何m²?(小数OK)",a:1.65,u:"m²"},
+{c:"身近なモノ",q:"東京ドーム1個分といわれる面積は約何m²?",a:47000,u:"m²"},
+{c:"身近なモノ",q:"一般的なエレベーターの定員11人の積載量は約何kg?",a:750,u:"kg"},
+{c:"身近なモノ",q:"体温計で測る日本人の平均体温(平熱)は約何℃?(小数OK)",a:36.5,u:"℃"},
+/* ---- 記録・ランキング ---- */
+{c:"記録・ランキング",q:"男子100m走の世界記録は何秒?(小数OK)",a:9.58,u:"秒"},
+{c:"記録・ランキング",q:"女子100m走の世界記録は何秒?(小数OK)",a:10.49,u:"秒"},
+{c:"記録・ランキング",q:"男子200m走の世界記録は何秒?(小数OK)",a:19.19,u:"秒"},
+{c:"記録・ランキング",q:"男子マラソン世界記録は2時間0分何秒?",a:35,u:"秒"},
+{c:"記録・ランキング",q:"男子走り高跳びの世界記録は何cm?",a:245,u:"cm"},
+{c:"記録・ランキング",q:"男子走り幅跳びの世界記録は何cm?",a:895,u:"cm"},
+{c:"記録・ランキング",q:"競泳男子50m自由形の世界記録は約何秒?",a:21,u:"秒"},
+{c:"記録・ランキング",q:"サッカーW杯最多優勝のブラジルは何回優勝している?",a:5,u:"回"},
+{c:"記録・ランキング",q:"王貞治の通算ホームラン数は?",a:868,u:"本"},
+{c:"記録・ランキング",q:"イチローのMLB通算安打数は?",a:3089,u:"本"},
+{c:"記録・ランキング",q:"イチローのMLBシーズン最多安打記録は?",a:262,u:"本"},
+{c:"記録・ランキング",q:"大谷翔平が2024年に打ったホームラン数は?",a:54,u:"本"},
+{c:"記録・ランキング",q:"大谷翔平が2024年に決めた盗塁数は?",a:59,u:"個"},
+{c:"記録・ランキング",q:"藤井聡太が史上最年少でタイトルを獲得したのは何歳?",a:17,u:"歳"},
+{c:"記録・ランキング",q:"大相撲・白鵬の幕内優勝回数は?",a:45,u:"回"},
+{c:"記録・ランキング",q:"映画『千と千尋の神隠し』の日本興行収入は約何億円?",a:316,u:"億円"},
+{c:"記録・ランキング",q:"映画『鬼滅の刃 無限列車編』の日本興行収入は約何億円?",a:407,u:"億円"},
+{c:"記録・ランキング",q:"映画『タイタニック』の世界興行収入は約何億ドル?",a:22,u:"億ドル"},
+{c:"記録・ランキング",q:"映画『アバター』の世界興行収入は約何億ドル?",a:29,u:"億ドル"},
+{c:"記録・ランキング",q:"飼育された世界一長いヘビ(ギネス)は約何m?(小数OK)",a:7.7,u:"m"},
+{c:"記録・ランキング",q:"人類の最長寿記録(ジャンヌ・カルマン)は何歳?",a:122,u:"歳"},
+{c:"記録・ランキング",q:"日本人の最長寿記録(田中カ子さん)は何歳?",a:119,u:"歳"},
+{c:"記録・ランキング",q:"史上最も背が高い人(ロバート・ワドロー)の身長は何cm?",a:272,u:"cm"},
+{c:"記録・ランキング",q:"史上最も背が低い成人の身長は約何cm?",a:55,u:"cm"},
+{c:"記録・ランキング",q:"世界一売れたゲーム機PS2の販売台数は約何億台?(小数OK)",a:1.6,u:"億台"},
+{c:"記録・ランキング",q:"世界一売れたゲーム『マインクラフト』の販売本数は約何億本?",a:3,u:"億本"},
+{c:"記録・ランキング",q:"ポケモンは現在全部で約何種類?",a:1025,u:"種類"},
+{c:"記録・ランキング",q:"富士山の年間登山者数は約何万人?",a:22,u:"万人"},
+{c:"記録・ランキング",q:"エベレスト登頂の最年少記録は何歳?",a:13,u:"歳"},
+{c:"記録・ランキング",q:"三浦雄一郎がエベレスト最高齢登頂を果たしたのは何歳?",a:80,u:"歳"},
+{c:"記録・ランキング",q:"ボウリングのパーフェクトは何点?",a:300,u:"点"},
+{c:"記録・ランキング",q:"M-1グランプリの優勝賞金は何万円?",a:1000,u:"万円"},
+{c:"記録・ランキング",q:"世界一売れたアルバム『スリラー』の売上は約何万枚?",a:7000,u:"万枚"},
+{c:"記録・ランキング",q:"チーターの最高時速は約何km?",a:110,u:"km/h"},
+{c:"記録・ランキング",q:"ハヤブサの急降下速度は約時速何km?",a:390,u:"km/h"},
+{c:"記録・ランキング",q:"競走馬の最高速度は約時速何km?",a:70,u:"km/h"},
+{c:"記録・ランキング",q:"ウサイン・ボルトの最高瞬間速度は約時速何km?",a:45,u:"km/h"},
+{c:"記録・ランキング",q:"F1マシンの最高速度は約時速何km?",a:370,u:"km/h"},
+{c:"記録・ランキング",q:"竹が1日に伸びる長さは最大約何cm?",a:100,u:"cm"},
+{c:"記録・ランキング",q:"円周率の暗唱世界記録は約何万桁?",a:10,u:"万桁"},
+{c:"記録・ランキング",q:"大相撲の優勝賞金(幕内最高優勝)は何万円?",a:1000,u:"万円"},
+{c:"記録・ランキング",q:"世界一高い場所にある首都・ラパスの標高は約何m?",a:3600,u:"m"},
+{c:"記録・ランキング",q:"世界一長い橋(丹陽昆山特大橋)の長さは約何km?",a:165,u:"km"},
+{c:"記録・ランキング",q:"世界一大きい動物・シロナガスクジラの体長は最大約何m?",a:30,u:"m"},
+{c:"記録・ランキング",q:"世界一速い鉄道の営業速度(上海リニア)は時速約何km?",a:430,u:"km/h"},
+{c:"記録・ランキング",q:"ギネス認定・世界一長い犬の舌は約何cm?",a:18,u:"cm"},
+{c:"記録・ランキング",q:"タイタニック号の全長は約何m?",a:269,u:"m"},
+{c:"記録・ランキング",q:"箱根駅伝の総距離は約何km?",a:217,u:"km"},
+{c:"記録・ランキング",q:"東京マラソンのコース距離は約何km?(小数OK)",a:42.195,u:"km"},
+/* ---- 統計・意外な数字 ---- */
+{c:"統計・意外な数字",q:"日本のコンビニの店舗数は約何万店?(小数OK)",a:5.7,u:"万店"},
+{c:"統計・意外な数字",q:"日本の信号機の数は約何万基?",a:21,u:"万基"},
+{c:"統計・意外な数字",q:"日本の郵便ポストの数は約何万本?",a:17,u:"万本"},
+{c:"統計・意外な数字",q:"日本の自動販売機の台数は約何万台?",a:400,u:"万台"},
+{c:"統計・意外な数字",q:"日本のマクドナルドの店舗数は約何店?",a:3000,u:"店"},
+{c:"統計・意外な数字",q:"日本のスターバックスの店舗数は約何店?",a:1900,u:"店"},
+{c:"統計・意外な数字",q:"日本の鉄道駅の数は約何駅?",a:9000,u:"駅"},
+{c:"統計・意外な数字",q:"日本の空港の数は?",a:97,u:"港"},
+{c:"統計・意外な数字",q:"日本の大学の数は約何校?",a:800,u:"校"},
+{c:"統計・意外な数字",q:"日本の神社の数は約何万社?",a:8,u:"万社"},
+{c:"統計・意外な数字",q:"日本のお寺の数は約何万か寺?(小数OK)",a:7.7,u:"万か寺"},
+{c:"統計・意外な数字",q:"日本で一番多い苗字「佐藤」さんは約何万人?",a:180,u:"万人"},
+{c:"統計・意外な数字",q:"日本で飼われている犬は約何万頭?",a:680,u:"万頭"},
+{c:"統計・意外な数字",q:"日本で飼われている猫は約何万頭?",a:900,u:"万頭"},
+{c:"統計・意外な数字",q:"東京タワーの外階段は約何段?",a:600,u:"段"},
+{c:"統計・意外な数字",q:"世界のマクドナルドの店舗数は約何万店?",a:4,u:"万店"},
+{c:"統計・意外な数字",q:"人間は1分間に約何回まばたきする?",a:20,u:"回"},
+{c:"統計・意外な数字",q:"安静時の心拍数は1分間に約何回?",a:70,u:"回"},
+{c:"統計・意外な数字",q:"成人の骨の数は?",a:206,u:"本"},
+{c:"統計・意外な数字",q:"赤ちゃんの骨の数は約何本?",a:300,u:"本"},
+{c:"統計・意外な数字",q:"永久歯は親知らずを含めて全部で何本?",a:32,u:"本"},
+{c:"統計・意外な数字",q:"乳歯は全部で何本?",a:20,u:"本"},
+{c:"統計・意外な数字",q:"人間の血管を全部つなげると約何万km?",a:10,u:"万km"},
+{c:"統計・意外な数字",q:"人間の髪の毛は約何万本?",a:10,u:"万本"},
+{c:"統計・意外な数字",q:"人間の体の細胞の数は約何兆個?",a:37,u:"兆個"},
+{c:"統計・意外な数字",q:"成人の体の水分の割合は約何%?",a:60,u:"%"},
+{c:"統計・意外な数字",q:"体重60kgの人の血液量は約何L?",a:5,u:"L"},
+{c:"統計・意外な数字",q:"成人の脳の重さは約何g?",a:1400,u:"g"},
+{c:"統計・意外な数字",q:"心臓の重さは約何g?",a:300,u:"g"},
+{c:"統計・意外な数字",q:"小腸の長さは約何m?",a:6,u:"m"},
+{c:"統計・意外な数字",q:"大腸の長さは約何m?(小数OK)",a:1.5,u:"m"},
+{c:"統計・意外な数字",q:"髪の毛は1か月に約何mm伸びる?",a:10,u:"mm"},
+{c:"統計・意外な数字",q:"手の爪は1か月に約何mm伸びる?",a:3,u:"mm"},
+{c:"統計・意外な数字",q:"日本人男性の平均寿命は約何歳?",a:81,u:"歳"},
+{c:"統計・意外な数字",q:"日本人女性の平均寿命は約何歳?",a:87,u:"歳"},
+{c:"統計・意外な数字",q:"日本人成人男性の平均身長は約何cm?",a:171,u:"cm"},
+{c:"統計・意外な数字",q:"日本人成人女性の平均身長は約何cm?",a:158,u:"cm"},
+{c:"統計・意外な数字",q:"日本の平均年収は約何万円?",a:460,u:"万円"},
+{c:"統計・意外な数字",q:"世界の言語の数は約何種類?",a:7000,u:"種類"},
+{c:"統計・意外な数字",q:"常用漢字は何字?",a:2136,u:"字"},
+{c:"統計・意外な数字",q:"ひらがなは何文字?(濁点・半濁点を除く)",a:46,u:"文字"},
+{c:"統計・意外な数字",q:"アフリカゾウの体重は約何トン?",a:6,u:"トン"},
+{c:"統計・意外な数字",q:"シロナガスクジラの体重は約何トン?",a:150,u:"トン"},
+{c:"統計・意外な数字",q:"キリンの首の骨は何個?",a:7,u:"個"},
+{c:"統計・意外な数字",q:"タコの心臓はいくつ?",a:3,u:"個"},
+{c:"統計・意外な数字",q:"カタツムリの歯は約何本?",a:10000,u:"本"},
+{c:"統計・意外な数字",q:"アリは自分の体重の約何倍の物を持ち上げられる?",a:50,u:"倍"},
+{c:"統計・意外な数字",q:"ゴキブリは約何億年前から地球にいる?",a:3,u:"億年前"},
+{c:"統計・意外な数字",q:"恐竜が絶滅したのは約何万年前?",a:6600,u:"万年前"},
+{c:"統計・意外な数字",q:"地球が誕生したのは約何億年前?",a:46,u:"億年前"},
+{c:"統計・意外な数字",q:"ホモ・サピエンスが誕生したのは約何万年前?",a:20,u:"万年前"},
+{c:"統計・意外な数字",q:"セミの成虫の寿命は約何日?",a:30,u:"日"},
+{c:"統計・意外な数字",q:"ハツカネズミの寿命は約何年?",a:2,u:"年"},
+{c:"統計・意外な数字",q:"犬の平均寿命は約何歳?",a:14,u:"歳"},
+{c:"統計・意外な数字",q:"猫の平均寿命は約何歳?",a:16,u:"歳"},
+{c:"統計・意外な数字",q:"最長寿の錦鯉「花子」は何歳まで生きたとされる?",a:226,u:"歳"},
+{c:"統計・意外な数字",q:"マグロの泳ぐ速さは最高で約時速何km?",a:80,u:"km/h"},
+{c:"統計・意外な数字",q:"ゾウガメの寿命は約何年?",a:150,u:"年"},
+{c:"統計・意外な数字",q:"ニシオンデンザメの寿命は約何年といわれる?",a:400,u:"年"},
+{c:"統計・意外な数字",q:"ハチドリは1秒間に約何回羽ばたく?",a:50,u:"回"},
+{c:"統計・意外な数字",q:"ミツバチ1匹が一生で作るハチミツはティースプーン約何杯分?",a:1,u:"杯"},
+{c:"統計・意外な数字",q:"キリンの睡眠時間は1日約何分といわれる?",a:20,u:"分"},
+{c:"統計・意外な数字",q:"人間の1日の唾液の量は約何L?(小数OK)",a:1.5,u:"L"},
+{c:"統計・意外な数字",q:"人間は一生で約何年分眠るといわれる?(80年生きた場合)",a:27,u:"年"},
+{c:"統計・意外な数字",q:"くしゃみの速度は約時速何km?",a:300,u:"km/h"},
+{c:"統計・意外な数字",q:"日本の年間のおにぎり消費量は1人あたり約何個といわれる?",a:80,u:"個"},
+{c:"統計・意外な数字",q:"日本人1人が1年間に食べるお米は約何kg?",a:50,u:"kg"},
+{c:"統計・意外な数字",q:"日本の1世帯あたりの年間の卵の消費量は約何個?",a:900,u:"個"},
+{c:"統計・意外な数字",q:"日本で1日に生まれる赤ちゃんは約何人?",a:1900,u:"人"},
+{c:"統計・意外な数字",q:"東京ディズニーランドの年間来場者数は約何万人?",a:1500,u:"万人"},
+{c:"統計・意外な数字",q:"富士山の山小屋の数は約何軒?",a:40,u:"軒"},
+{c:"統計・意外な数字",q:"日本の国道の路線数は何路線?",a:459,u:"路線"},
+{c:"統計・意外な数字",q:"日本のダムの数は約何基?",a:2700,u:"基"},
+{c:"統計・意外な数字",q:"サイコロの向かい合う面の合計は?",a:7,u:""},
+{c:"統計・意外な数字",q:"1から100までの数字を全部足すといくつ?",a:5050,u:""},
+{c:"統計・意外な数字",q:"紙を42回折ると厚さは月に届くといわれるが、実際に折れた世界記録は何回?",a:12,u:"回"},
+/* ---- 時間系 ---- */
+{c:"時間",q:"新幹線のぞみの東京→新大阪の所要時間は約何分?",a:150,u:"分"},
+{c:"時間",q:"新幹線のぞみの東京→博多の所要時間は約何分?",a:300,u:"分"},
+{c:"時間",q:"飛行機の羽田→那覇の飛行時間は約何分?",a:150,u:"分"},
+{c:"時間",q:"飛行機の東京→ニューヨークの飛行時間は約何時間?",a:13,u:"時間"},
+{c:"時間",q:"月の光が地球に届くまで約何秒?(小数OK)",a:1.3,u:"秒"},
+{c:"時間",q:"太陽の光が地球に届くまで約何分?",a:8,u:"分"},
+{c:"時間",q:"ゾウの妊娠期間は約何か月?",a:22,u:"か月"},
+{c:"時間",q:"人間の妊娠期間は約何日?",a:280,u:"日"},
+{c:"時間",q:"犬の妊娠期間は約何日?",a:63,u:"日"},
+{c:"時間",q:"キリンの妊娠期間は約何か月?",a:15,u:"か月"},
+{c:"時間",q:"ハムスターの妊娠期間は約何日?",a:16,u:"日"},
+{c:"時間",q:"ウサギの妊娠期間は約何日?",a:30,u:"日"},
+{c:"時間",q:"ニワトリの卵がかえるまで約何日?",a:21,u:"日"},
+{c:"時間",q:"アメリカの周期ゼミは何年ごとに大量発生する?",a:17,u:"年"},
+{c:"時間",q:"地球の自転(1回転)は24時間より約何分短い?",a:4,u:"分"},
+{c:"時間",q:"月が地球を1周するのにかかる日数は約何日?",a:27,u:"日"},
+{c:"時間",q:"富士山登山(吉田ルート・登り)の標準時間は約何時間?",a:6,u:"時間"},
+{c:"時間",q:"市民ランナーのフルマラソン平均タイムは約何時間?(小数OK)",a:4.5,u:"時間"},
+{c:"時間",q:"東京マラソンの制限時間は何時間?",a:7,u:"時間"},
+{c:"時間",q:"サッカーの試合時間はハーフタイム15分を含めて合計何分?",a:105,u:"分"},
+{c:"時間",q:"映画『タイタニック』の上映時間は何分?",a:194,u:"分"},
+{c:"時間",q:"映画『君の名は。』の上映時間は約何分?",a:106,u:"分"},
+{c:"時間",q:"山手線1周の所要時間は約何分?",a:60,u:"分"},
+{c:"時間",q:"国際宇宙ステーションが地球を1周する時間は約何分?",a:90,u:"分"},
+{c:"時間",q:"時速100kmの車で月まで走ると約何日かかる?",a:160,u:"日"},
+{c:"時間",q:"ジェット機(時速900km)で太陽まで飛ぶと約何年かかる?",a:19,u:"年"},
+{c:"時間",q:"ボクシングの1ラウンドは何分?",a:3,u:"分"},
+{c:"時間",q:"ラグビーの試合時間は前後半それぞれ何分?",a:40,u:"分"},
+{c:"時間",q:"NBA(バスケ)の1クォーターは何分?",a:12,u:"分"},
+{c:"時間",q:"食べ物が胃で消化されるまで約何時間?",a:3,u:"時間"},
+{c:"時間",q:"人は一晩に約何回寝返りをうつ?",a:20,u:"回"},
+{c:"時間",q:"コアラの1日の睡眠時間は約何時間?",a:20,u:"時間"},
+{c:"時間",q:"猫の1日の睡眠時間は約何時間?",a:14,u:"時間"},
+{c:"時間",q:"人間の最長不眠のギネス記録は約何時間?",a:264,u:"時間"},
+{c:"時間",q:"カップ焼きそばの湯切りまでの待ち時間は一般的に何分?",a:3,u:"分"},
+{c:"時間",q:"炊飯器でご飯が炊けるまで(普通炊き)は約何分?",a:50,u:"分"},
+{c:"時間",q:"熱いお風呂(42℃)の推奨入浴時間は約何分?",a:10,u:"分"},
+{c:"時間",q:"パンダの妊娠期間は約何か月?",a:5,u:"か月"},
+{c:"時間",q:"馬の妊娠期間は約何か月?",a:11,u:"か月"},
+{c:"時間",q:"シロナガスクジラの妊娠期間は約何か月?",a:11,u:"か月"},
+{c:"時間",q:"太陽系が銀河系を1周するのにかかる時間は約何億年?(小数OK)",a:2.3,u:"億年"},
+{c:"時間",q:"ハレー彗星が地球に戻ってくる周期は約何年?",a:76,u:"年"},
+{c:"時間",q:"エベレスト登頂にかかる日数(ベースキャンプから)は約何日?",a:40,u:"日"},
+{c:"時間",q:"東京→大阪を歩くと約何日かかる?(1日8時間歩行)",a:14,u:"日"},
+/* ---- 追加ミックス ---- */
+{c:"歴史・年代",q:"徳川吉宗は江戸幕府の何代将軍?",a:8,u:"代"},
+{c:"歴史・年代",q:"昭和は昭和何年まで続いた?",a:64,u:"年"},
+{c:"歴史・年代",q:"平成は平成何年まで続いた?",a:31,u:"年"},
+{c:"歴史・年代",q:"明治は明治何年まで続いた?",a:45,u:"年"},
+{c:"歴史・年代",q:"大正は大正何年まで続いた?",a:15,u:"年"},
+{c:"歴史・年代",q:"新1万円札の渋沢栄一は何歳まで生きた?",a:91,u:"歳"},
+{c:"歴史・年代",q:"江戸時代の江戸の人口は最盛期で約何万人?",a:100,u:"万人"},
+{c:"地理・スケール",q:"日本の世界遺産の数は?(2025年時点)",a:26,u:"件"},
+{c:"地理・スケール",q:"世界の世界遺産の総数は約何件?",a:1200,u:"件"},
+{c:"地理・スケール",q:"日本の「市」の数は約何市?",a:790,u:"市"},
+{c:"地理・スケール",q:"日本の有人島の数は約何島?",a:400,u:"島"},
+{c:"地理・スケール",q:"東京湾アクアラインの全長は約何km?",a:15,u:"km"},
+{c:"地理・スケール",q:"日本の面積は世界で約何位?",a:61,u:"位"},
+{c:"地理・スケール",q:"日本の国土に占める森林の割合は約何%?",a:67,u:"%"},
+{c:"地理・スケール",q:"世界最大の都市圏・東京圏の人口は約何万人?",a:3700,u:"万人"},
+{c:"地理・スケール",q:"日本で2番目に大きい湖・霞ヶ浦の面積は約何km²?",a:220,u:"km²"},
+{c:"身近なモノ",q:"缶コーヒーのショート缶は何g入り?",a:185,u:"g"},
+{c:"身近なモノ",q:"ビールの大瓶は何ml?",a:633,u:"ml"},
+{c:"身近なモノ",q:"ビールの中瓶は何ml?",a:500,u:"ml"},
+{c:"身近なモノ",q:"家庭のバスタブ1杯のお湯は約何L?",a:200,u:"L"},
+{c:"身近なモノ",q:"シャワー1分間で使う水は約何L?",a:10,u:"L"},
+{c:"身近なモノ",q:"お米1合は約何g?",a:150,u:"g"},
+{c:"身近なモノ",q:"お米1合を炊くとご飯は約何g になる?",a:330,u:"g"},
+{c:"身近なモノ",q:"成人男性の1日の食塩摂取目標量は何g未満?(小数OK)",a:7.5,u:"g"},
+{c:"身近なモノ",q:"ボックスティッシュ1箱は約何組入り?",a:150,u:"組"},
+{c:"身近なモノ",q:"ガソリン1Lの重さは約何g?",a:750,u:"g"},
+{c:"身近なモノ",q:"牛乳コップ1杯(200ml)のカロリーは約何kcal?",a:140,u:"kcal"},
+{c:"身近なモノ",q:"もりそば1枚のカロリーは約何kcal?",a:300,u:"kcal"},
+{c:"身近なモノ",q:"マックのフライドポテトMサイズのカロリーは約何kcal?",a:410,u:"kcal"},
+{c:"身近なモノ",q:"チキンマックナゲット5ピースのカロリーは約何kcal?",a:260,u:"kcal"},
+{c:"身近なモノ",q:"缶ビール350mlのカロリーは約何kcal?",a:140,u:"kcal"},
+{c:"身近なモノ",q:"枝豆100g(さやから出した分)のカロリーは約何kcal?",a:130,u:"kcal"},
+{c:"身近なモノ",q:"唐揚げ1個のカロリーは約何kcal?",a:70,u:"kcal"},
+{c:"身近なモノ",q:"餃子1個のカロリーは約何kcal?",a:40,u:"kcal"},
+{c:"身近なモノ",q:"不動産広告の「徒歩1分」は何mと決められている?",a:80,u:"m"},
+{c:"身近なモノ",q:"半熟ゆで卵を作るゆで時間は約何分?",a:7,u:"分"},
+{c:"記録・ランキング",q:"大谷翔平が記録した日本人投手最速の球速は時速何km?",a:165,u:"km/h"},
+{c:"記録・ランキング",q:"佐々木朗希が完全試合で記録した奪三振数は?",a:19,u:"個"},
+{c:"記録・ランキング",q:"オリンピック最多金メダル(フェルプス)は何個?",a:23,u:"個"},
+{c:"記録・ランキング",q:"藤井聡太が達成した将棋の最多同時タイトルは何冠?",a:8,u:"冠"},
+{c:"記録・ランキング",q:"競馬の日本ダービーの距離は何m?",a:2400,u:"m"},
+{c:"記録・ランキング",q:"競馬の有馬記念の距離は何m?",a:2500,u:"m"},
+{c:"記録・ランキング",q:"ゴルフの18ホールの標準パーは?",a:72,u:""},
+{c:"記録・ランキング",q:"ツール・ド・フランスの総距離は約何km?",a:3500,u:"km"},
+{c:"記録・ランキング",q:"女子マラソンの世界記録は約2時間何分?",a:10,u:"分"},
+{c:"記録・ランキング",q:"世界最速のジェットコースター(アブダビ)は時速約何km?",a:240,u:"km/h"},
+{c:"記録・ランキング",q:"富士急ハイランドFUJIYAMAの最高速度は時速約何km?",a:130,u:"km/h"},
+{c:"統計・意外な数字",q:"渋谷スクランブル交差点を1回の青信号で渡る人は最大約何人?",a:3000,u:"人"},
+{c:"統計・意外な数字",q:"猫の骨の数は約何本?",a:240,u:"本"},
+{c:"統計・意外な数字",q:"人間は1分間に約何回呼吸する?",a:15,u:"回"},
+{c:"統計・意外な数字",q:"心臓が1日に送り出す血液は約何L?",a:7000,u:"L"},
+{c:"統計・意外な数字",q:"脳は体全体のエネルギーの約何%を消費する?",a:20,u:"%"},
+{c:"統計・意外な数字",q:"人は1日に平均約何回おならをする?",a:10,u:"回"},
+{c:"統計・意外な数字",q:"胃は最大約何Lまでふくらむ?(小数OK)",a:1.5,u:"L"},
+{c:"統計・意外な数字",q:"肺の内部の表面積はテニスコート半面分、約何m²?",a:70,u:"m²"},
+{c:"統計・意外な数字",q:"2025年用の年賀はがきの発行枚数は約何億枚?",a:10,u:"億枚"},
+{c:"統計・意外な数字",q:"日本の自動車保有台数は約何万台?",a:8000,u:"万台"},
+{c:"統計・意外な数字",q:"世界で1日に飛ぶ旅客機のフライト数は約何万便?",a:10,u:"万便"},
+{c:"統計・意外な数字",q:"東京スカイツリーのエレベーターの速さは分速約何m?",a:600,u:"m"},
+{c:"時間",q:"カップラーメンのお湯を入れてからの待ち時間は基本何分?",a:3,u:"分"},
+{c:"時間",q:"歯磨きの推奨時間は約何分?",a:3,u:"分"},
+{c:"時間",q:"満月から次の満月までは約何日?(小数OK)",a:29.5,u:"日"},
+{c:"時間",q:"明治5年、日本初の鉄道(新橋→横浜)の所要時間は約何分?",a:53,u:"分"},
+{c:"時間",q:"江戸時代、江戸→京都を東海道で歩くと約何日かかった?",a:14,u:"日"},
+{c:"時間",q:"まばたき1回にかかる時間は約何秒?(小数OK)",a:0.3,u:"秒"},
+/* ---- 追加:答えやすい問題 ---- */
+{c:"歴史・年代",q:"鎌倉幕府が滅亡したのは西暦何年?",a:1333,u:"年"},
+{c:"歴史・年代",q:"足利尊氏が征夷大将軍になった(室町幕府成立)のは西暦何年?",a:1338,u:"年"},
+{c:"歴史・年代",q:"長篠の戦いが起きたのは西暦何年?",a:1575,u:"年"},
+{c:"歴史・年代",q:"豊臣秀吉が天下統一を果たしたのは西暦何年?",a:1590,u:"年"},
+{c:"歴史・年代",q:"桜田門外の変が起きたのは西暦何年?",a:1860,u:"年"},
+{c:"歴史・年代",q:"日本初の鉄道(新橋〜横浜)が開通したのは西暦何年?",a:1872,u:"年"},
+{c:"歴史・年代",q:"大日本帝国憲法が発布されたのは西暦何年?",a:1889,u:"年"},
+{c:"歴史・年代",q:"関東大震災が起きたのは西暦何年?",a:1923,u:"年"},
+{c:"歴史・年代",q:"昭和元年は西暦何年?",a:1926,u:"年"},
+{c:"歴史・年代",q:"二・二六事件が起きたのは西暦何年?",a:1936,u:"年"},
+{c:"歴史・年代",q:"広島に原爆が投下されたのは1945年8月何日?",a:6,u:"日"},
+{c:"歴史・年代",q:"終戦記念日は8月何日?",a:15,u:"日"},
+{c:"歴史・年代",q:"文化の日は11月何日?",a:3,u:"日"},
+{c:"歴史・年代",q:"勤労感謝の日は11月何日?",a:23,u:"日"},
+{c:"歴史・年代",q:"昭和の日は4月何日?",a:29,u:"日"},
+{c:"歴史・年代",q:"建国記念の日は2月何日?",a:11,u:"日"},
+{c:"歴史・年代",q:"山の日は8月何日?",a:11,u:"日"},
+{c:"歴史・年代",q:"2回目の東京オリンピックが開催されたのは西暦何年?",a:2021,u:"年"},
+{c:"歴史・年代",q:"リーマンショックが起きたのは西暦何年?",a:2008,u:"年"},
+{c:"歴史・年代",q:"Windows95が発売されたのは西暦何年?",a:1995,u:"年"},
+{c:"歴史・年代",q:"ポケットモンスター赤・緑が発売されたのは西暦何年?",a:1996,u:"年"},
+{c:"歴史・年代",q:"ドラゴンクエスト(初代)が発売されたのは西暦何年?",a:1986,u:"年"},
+{c:"歴史・年代",q:"スーパーマリオブラザーズが発売されたのは西暦何年?",a:1985,u:"年"},
+{c:"歴史・年代",q:"ドラえもんの連載が始まったのは西暦何年?",a:1970,u:"年"},
+{c:"歴史・年代",q:"ONE PIECEの連載が始まったのは西暦何年?",a:1997,u:"年"},
+{c:"歴史・年代",q:"鬼滅の刃の連載が始まったのは西暦何年?",a:2016,u:"年"},
+{c:"歴史・年代",q:"新紙幣(渋沢栄一の1万円札)が発行されたのは西暦何年?",a:2024,u:"年"},
+{c:"歴史・年代",q:"消費税が10%になったのは西暦何年?",a:2019,u:"年"},
+{c:"歴史・年代",q:"消費税が8%になったのは西暦何年?",a:2014,u:"年"},
+{c:"歴史・年代",q:"東京ディズニーランドが開園したのは西暦何年?",a:1983,u:"年"},
+{c:"歴史・年代",q:"USJ(ユニバーサル・スタジオ・ジャパン)が開園したのは西暦何年?",a:2001,u:"年"},
+{c:"歴史・年代",q:"なでしこジャパンがサッカーW杯で優勝したのは西暦何年?",a:2011,u:"年"},
+{c:"歴史・年代",q:"Googleが創業したのは西暦何年?",a:1998,u:"年"},
+{c:"歴史・年代",q:"Appleが創業したのは西暦何年?",a:1976,u:"年"},
+{c:"歴史・年代",q:"YouTubeが誕生したのは西暦何年?",a:2005,u:"年"},
+{c:"地理・スケール",q:"日本の政令指定都市はいくつ?",a:20,u:"市"},
+{c:"地理・スケール",q:"日本一高いビル・麻布台ヒルズ森JPタワーの高さは約何m?",a:325,u:"m"},
+{c:"地理・スケール",q:"東京スカイツリーは東京タワーより何m高い?",a:301,u:"m"},
+{c:"地理・スケール",q:"日本列島の北海道から沖縄までの長さは約何km?",a:3000,u:"km"},
+{c:"地理・スケール",q:"東京〜名古屋の直線距離は約何km?",a:260,u:"km"},
+{c:"地理・スケール",q:"大阪〜福岡の直線距離は約何km?",a:480,u:"km"},
+{c:"地理・スケール",q:"東京〜台北の距離は約何km?",a:2100,u:"km"},
+{c:"地理・スケール",q:"東京〜ハワイ(ホノルル)の距離は約何km?",a:6200,u:"km"},
+{c:"地理・スケール",q:"東京〜ロンドンの距離は約何km?",a:9600,u:"km"},
+{c:"地理・スケール",q:"東京から富士山までの直線距離は約何km?",a:100,u:"km"},
+{c:"地理・スケール",q:"琵琶湖1周の距離は約何km?",a:235,u:"km"},
+{c:"地理・スケール",q:"日本最南端・沖ノ鳥島は東京から約何km?",a:1700,u:"km"},
+{c:"地理・スケール",q:"人口が1億人を超えている国は世界に何か国?",a:16,u:"か国"},
+{c:"地理・スケール",q:"愛知県の人口は都道府県で何位?",a:4,u:"位"},
+{c:"地理・スケール",q:"京都府の人口は約何万人?",a:250,u:"万人"},
+{c:"地理・スケール",q:"沖縄県の人口は約何万人?",a:150,u:"万人"},
+{c:"地理・スケール",q:"横浜市の人口は約何万人?",a:380,u:"万人"},
+{c:"地理・スケール",q:"名古屋市の人口は約何万人?",a:230,u:"万人"},
+{c:"地理・スケール",q:"札幌市の人口は約何万人?",a:200,u:"万人"},
+{c:"地理・スケール",q:"福岡市の人口は約何万人?",a:165,u:"万人"},
+{c:"地理・スケール",q:"仙台市の人口は約何万人?",a:110,u:"万人"},
+{c:"地理・スケール",q:"日本の活火山の数は?",a:111,u:"座"},
+{c:"地理・スケール",q:"日本の一級河川の水系はいくつ?",a:109,u:"水系"},
+{c:"地理・スケール",q:"四国のお遍路(霊場)は全部で何か所?",a:88,u:"か所"},
+{c:"地理・スケール",q:"アメリカの州の数は?",a:50,u:"州"},
+{c:"地理・スケール",q:"EUの加盟国数は?",a:27,u:"か国"},
+{c:"地理・スケール",q:"中国と陸で国境を接する国は何か国?",a:14,u:"か国"},
+{c:"身近なモノ",q:"自動販売機の缶ジュースは約何円?",a:130,u:"円"},
+{c:"身近なモノ",q:"サイゼリヤのミラノ風ドリアは約何円?",a:300,u:"円"},
+{c:"身近なモノ",q:"名刺の横幅は何mm?",a:91,u:"mm"},
+{c:"身近なモノ",q:"はがきの縦の長さは何mm?",a:148,u:"mm"},
+{c:"身近なモノ",q:"1円玉の直径は何mm?",a:20,u:"mm"},
+{c:"身近なモノ",q:"500円玉の直径は何mm?(小数OK)",a:26.5,u:"mm"},
+{c:"身近なモノ",q:"5円玉の穴の直径は約何mm?",a:5,u:"mm"},
+{c:"身近なモノ",q:"お米1粒の重さは約何mg?",a:20,u:"mg"},
+{c:"身近なモノ",q:"食パン「1斤」はルール上何g以上と決められている?",a:340,u:"g"},
+{c:"身近なモノ",q:"バター1箱は何g?",a:200,u:"g"},
+{c:"身近なモノ",q:"カップ酒(1合)は何ml?",a:180,u:"ml"},
+{c:"身近なモノ",q:"ウイスキーのシングル1杯(ショット)は何ml?",a:30,u:"ml"},
+{c:"身近なモノ",q:"ワインのフルボトル1本は何ml?",a:750,u:"ml"},
+{c:"身近なモノ",q:"一升瓶の日本酒は何合分?",a:10,u:"合"},
+{c:"身近なモノ",q:"お米の「1俵」は何kg?",a:60,u:"kg"},
+{c:"身近なモノ",q:"みかん1個の重さは約何g?",a:100,u:"g"},
+{c:"身近なモノ",q:"りんご1個の重さは約何g?",a:300,u:"g"},
+{c:"身近なモノ",q:"キャベツ1玉の重さは約何g?",a:1000,u:"g"},
+{c:"身近なモノ",q:"スイカ1玉の重さは約何kg?",a:5,u:"kg"},
+{c:"身近なモノ",q:"トイレットペーパー(シングル)1ロールは約何m?",a:60,u:"m"},
+{c:"身近なモノ",q:"ママチャリ(シティサイクル)の重さは約何kg?",a:18,u:"kg"},
+{c:"身近なモノ",q:"サッカーボール(5号球)の重さは約何g?",a:430,u:"g"},
+{c:"身近なモノ",q:"硬式野球ボールの重さは約何g?",a:145,u:"g"},
+{c:"身近なモノ",q:"テニスボールの重さは約何g?",a:58,u:"g"},
+{c:"身近なモノ",q:"割り箸の長さは約何cm?",a:20,u:"cm"},
+{c:"身近なモノ",q:"新品の鉛筆の長さは約何cm?",a:17,u:"cm"},
+{c:"身近なモノ",q:"料理の「大さじ1」は何ml?",a:15,u:"ml"},
+{c:"身近なモノ",q:"料理の「小さじ1」は何ml?",a:5,u:"ml"},
+{c:"身近なモノ",q:"お米1合を炊くときの水の量は約何ml?",a:200,u:"ml"},
+{c:"身近なモノ",q:"砂糖大さじ1杯のカロリーは約何kcal?",a:35,u:"kcal"},
+{c:"身近なモノ",q:"ツナ缶1缶(小)は約何g?",a:70,u:"g"},
+{c:"身近なモノ",q:"同じ硬貨は法律上、一度に何枚まで支払いに使える?",a:20,u:"枚"},
+{c:"身近なモノ",q:"コーラ500mlの糖分は角砂糖(1個4g)換算で約何個分?",a:14,u:"個"},
+{c:"身近なモノ",q:"350ml缶の高さは約何cm?",a:12,u:"cm"},
+{c:"身近なモノ",q:"単三電池の長さは約何cm?",a:5,u:"cm"},
+{c:"身近なモノ",q:"ペットボトルのキャップの直径は約何cm?",a:3,u:"cm"},
+{c:"身近なモノ",q:"お風呂の適温といわれる湯温は約何℃?",a:40,u:"℃"},
+{c:"身近なモノ",q:"ファミコンの発売時の定価は何円?",a:14800,u:"円"},
+{c:"身近なモノ",q:"初代ゲームボーイの発売時の定価は何円?",a:12500,u:"円"},
+{c:"身近なモノ",q:"スーパーファミコンの発売時の定価は何円?",a:25000,u:"円"},
+{c:"身近なモノ",q:"初代プレイステーションの発売時の定価は何円?",a:39800,u:"円"},
+{c:"身近なモノ",q:"Nintendo Switch(2017年発売時)の税抜価格は何円?",a:29980,u:"円"},
+{c:"身近なモノ",q:"初代ウォークマン(1979年)の定価は何円?",a:33000,u:"円"},
+{c:"身近なモノ",q:"初代iPhoneのアメリカでの価格は何ドル?",a:499,u:"ドル"},
+{c:"身近なモノ",q:"サラダ油大さじ1杯のカロリーは約何kcal?",a:110,u:"kcal"},
+{c:"記録・ランキング",q:"プロ野球で完全試合を達成した投手は何人?",a:16,u:"人"},
+{c:"記録・ランキング",q:"サッカー日本代表のW杯最高成績は「ベスト何」?",a:16,u:""},
+{c:"記録・ランキング",q:"サッカーJ1のクラブ数は?",a:20,u:"クラブ"},
+{c:"記録・ランキング",q:"夏の甲子園の出場校数は?",a:49,u:"校"},
+{c:"記録・ランキング",q:"箱根駅伝は全部で何区間?",a:10,u:"区間"},
+{c:"記録・ランキング",q:"東京2020オリンピックで日本が獲得した金メダルは何個?",a:27,u:"個"},
+{c:"記録・ランキング",q:"世界一高い像(インドの「統一の像」)の高さは約何m?",a:182,u:"m"},
+{c:"記録・ランキング",q:"奈良の大仏の高さは約何m?",a:15,u:"m"},
+{c:"記録・ランキング",q:"鎌倉の大仏の高さは約何m?",a:11,u:"m"},
+{c:"記録・ランキング",q:"キリンの身長は約何m?",a:5,u:"m"},
+{c:"記録・ランキング",q:"ダチョウの走る速さは約時速何km?",a:70,u:"km/h"},
+{c:"記録・ランキング",q:"ダチョウの卵1個の重さは約何kg?(小数OK)",a:1.5,u:"kg"},
+{c:"記録・ランキング",q:"映画『タイタニック』の日本興行収入は約何億円?",a:262,u:"億円"},
+{c:"記録・ランキング",q:"映画『アナと雪の女王』の日本興行収入は約何億円?",a:255,u:"億円"},
+{c:"記録・ランキング",q:"映画『君の名は。』の日本興行収入は約何億円?",a:251,u:"億円"},
+{c:"記録・ランキング",q:"映画『アベンジャーズ/エンドゲーム』の世界興行収入は約何億ドル?",a:28,u:"億ドル"},
+{c:"記録・ランキング",q:"映画『ハリー・ポッターと賢者の石』の日本興行収入は約何億円?",a:203,u:"億円"},
+{c:"統計・意外な数字",q:"47都道府県のうち「県」はいくつ?",a:43,u:"県"},
+{c:"統計・意外な数字",q:"1日は何秒?",a:86400,u:"秒"},
+{c:"統計・意外な数字",q:"1年は何時間?",a:8760,u:"時間"},
+{c:"統計・意外な数字",q:"1週間は何分?",a:10080,u:"分"},
+{c:"統計・意外な数字",q:"日本人の1日の平均歩数は約何歩?",a:6000,u:"歩"},
+{c:"統計・意外な数字",q:"1万歩歩くと約何km?",a:7,u:"km"},
+{c:"統計・意外な数字",q:"成人男性の1日の推奨摂取カロリーは約何kcal?",a:2600,u:"kcal"},
+{c:"統計・意外な数字",q:"成人女性の1日の推奨摂取カロリーは約何kcal?",a:2000,u:"kcal"},
+{c:"統計・意外な数字",q:"フルマラソン1回で消費するカロリーは約何kcal?",a:2500,u:"kcal"},
+{c:"統計・意外な数字",q:"日本人の1日の平均テレビ視聴時間は約何時間?",a:3,u:"時間"},
+{c:"統計・意外な数字",q:"LINEの国内利用者数は約何万人?",a:9700,u:"万人"},
+{c:"統計・意外な数字",q:"年末ジャンボ宝くじの1等賞金は何億円?",a:7,u:"億円"},
+{c:"統計・意外な数字",q:"年末ジャンボ1等が当たる確率は約何万分の1?",a:2000,u:"万分の1"},
+{c:"統計・意外な数字",q:"じゃんけんであいこになる確率は約何%?",a:33,u:"%"},
+{c:"統計・意外な数字",q:"サイコロで1の目が出る確率は約何%?",a:17,u:"%"},
+{c:"統計・意外な数字",q:"人生80年は約何日?",a:29200,u:"日"},
+{c:"時間",q:"車(高速道路)で東京→大阪は約何時間?",a:6,u:"時間"},
+{c:"時間",q:"夜行バスで東京→大阪は約何時間?",a:8,u:"時間"},
+{c:"時間",q:"飛行機の羽田→伊丹(大阪)の飛行時間は約何分?",a:70,u:"分"},
+{c:"時間",q:"飛行機の羽田→新千歳(札幌)の飛行時間は約何分?",a:95,u:"分"},
+{c:"時間",q:"飛行機の羽田→福岡の飛行時間は約何分?",a:110,u:"分"},
+{c:"時間",q:"飛行機の成田→ホノルルの飛行時間は約何時間?",a:7,u:"時間"},
+{c:"時間",q:"飛行機の成田→パリの飛行時間は約何時間?",a:14,u:"時間"},
+{c:"時間",q:"洗濯機の標準コース1回は約何分?",a:40,u:"分"},
+{c:"時間",q:"お風呂にお湯をためる時間は約何分?",a:15,u:"分"},
+{c:"時間",q:"徒歩で1km歩くと約何分?",a:12,u:"分"},
+{c:"時間",q:"自転車で1km走ると約何分?",a:4,u:"分"},
+{c:"時間",q:"固ゆで卵を作るゆで時間は約何分?",a:12,u:"分"},
+{c:"時間",q:"乾麺スパゲッティ(1.6mm)の標準ゆで時間は約何分?",a:7,u:"分"},
+{c:"時間",q:"映画館の本編前の予告編は合計約何分?",a:10,u:"分"},
+{c:"時間",q:"プロ野球の平均試合時間は約何時間?",a:3,u:"時間"},
+{c:"時間",q:"桜が開花してから満開になるまで約何日?",a:7,u:"日"},
+{c:"時間",q:"推奨されている手洗いの時間は約何秒?",a:30,u:"秒"},
+{c:"時間",q:"インフルエンザの潜伏期間は約何日?",a:2,u:"日"},
+{c:"時間",q:"ビール中瓶1本のアルコールを分解するのに約何時間かかる?",a:4,u:"時間"},
+];
+
+/* ---- イベント登録(初期化) ---- */
+function bind(id, fn){ const el = document.getElementById(id); if(el) el.addEventListener('click', fn); }
+bind('btn-start', goSetup);
+bind('btn-minus', ()=>changeCount(-1));
+bind('btn-plus', ()=>changeCount(1));
+bind('btn-go', startGame);
+bind('btn-back-title', ()=>show('screen-title'));
+bind('btn-answer-start', startAnswering);
+bind('btn-answer', showInput);
+bind('btn-submit', submitAnswer);
+bind('r-next', nextRound);
+bind('btn-rematch', rematch);
+bind('btn-change', goSetup);
+document.getElementById('i-value').addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); submitAnswer(); } });
+show('screen-title');
+</script>
+</body>
+</html>
